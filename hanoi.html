@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Torres de Hanoi - Error Alert</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sedgwick+Ave+Display&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #050505;
+            --neon-red: #ff003c;
+            --neon-blue: #00f3ff;
+            --neon-yellow: #fcee0a;
+            --neon-green: #0aff0a;
+            --neon-purple: #bd00ff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: url('background.webp');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            transition: background-color 0.2s ease; /* Suavizar el flash rojo */
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: -1;
+        }
+
+        /* FUENTE GRAFFITI */
+        h1, h2, h3, h4, .btn, .badge, label, select, .graffiti-font {
+            font-family: 'Sedgwick Ave Display', cursive;
+            letter-spacing: 1px;
+        }
+
+        /* NEÓN TEXTO */
+        .text-neon-purple { color: var(--neon-purple); text-shadow: 0 0 5px var(--neon-purple); }
+        .text-neon-yellow { color: var(--neon-yellow); text-shadow: 0 0 5px var(--neon-yellow); }
+        .text-neon-green { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
+
+        /* TARJETA */
+        .card-neon {
+            background: rgba(20, 20, 20, 0.85);
+            border: 2px solid var(--neon-purple);
+            box-shadow: 0 0 15px var(--neon-purple), inset 0 0 20px rgba(189, 0, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            max-width: 800px; 
+            width: 95%;
+        }
+
+        /* INPUTS */
+        .form-select-neon {
+            background-color: #000;
+            color: var(--neon-yellow);
+            border: 1px solid var(--neon-yellow);
+            box-shadow: 0 0 5px rgba(252, 238, 10, 0.2);
+            cursor: pointer;
+            padding: 0.25rem 2rem 0.25rem 0.75rem;
+        }
+        .form-select-neon:focus {
+            box-shadow: 0 0 10px var(--neon-yellow);
+            border-color: var(--neon-yellow);
+            background-color: #111;
+            color: #fff;
+        }
+
+        /* BOTONES */
+        .btn-neon {
+            background: transparent;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-neon:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        /* ZONA DE JUEGO */
+        .game-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 220px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #444;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-top: 5px; /* Reducido para dejar espacio al error */
+            margin-bottom: 15px;
+        }
+
+        .tower-container {
+            width: 30%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            border-radius: 0 0 8px 8px;
+        }
+        .tower-container:hover { background: rgba(255, 255, 255, 0.08); }
+
+        .tower-rod {
+            position: absolute;
+            bottom: 0; width: 10px; height: 180px;
+            background: #555; border-radius: 5px 5px 0 0; z-index: 0;
+        }
+
+        /* DISCOS */
+        .disk {
+            height: 20px; z-index: 2; border-radius: 5px;
+            margin-bottom: 2px; border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 0 5px currentColor; transition: all 0.15s ease;
+        }
+
+        /* MODAL */
+        .modal-content {
+            background-color: #111;
+            border: 2px solid var(--neon-green);
+            box-shadow: 0 0 30px var(--neon-green);
+            color: white;
+        }
+
+        /* ANIMACIÓN DE ERROR (SHAKE) */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake-anim {
+            animation: shake 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center">
+
+    <div class="overlay"></div>
+
+    <div class="card card-neon text-white p-3 shadow-lg">
+        <div class="card-body text-center p-2">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="m-0 text-neon-purple display-6" style="transform: rotate(-1deg);">TORRES DE HANOI</h2>
+                <span class="badge border border-light bg-transparent text-white">SOLO MODE</span>
+            </div>
+
+            <div class="row g-2 align-items-center mb-2 bg-black border border-secondary rounded p-2 mx-0">
+                <div class="col-5 text-start">
+                    <label class="text-neon-yellow small mb-0 d-block">DISCOS</label>
+                    <select id="diskSelect" class="form-select form-select-sm form-select-neon text-center" onchange="startGame()">
+                        <option value="3" selected>3 (Fácil)</option>
+                        <option value="4">4 (Normal)</option>
+                        <option value="5">5 (Medio)</option>
+                        <option value="6">6 (Difícil)</option>
+                        <option value="7">7 (Experto)</option>
+                        <option value="8">8 (Locura)</option>
+                    </select>
+                </div>
+                <div class="col-3 border-start border-secondary">
+                    <small class="text-white d-block graffiti-font" style="font-size: 0.9rem;">MÍNIMO</small>
+                    <span id="minMovesTxt" class="fw-bold text-neon-yellow fs-5">7</span>
+                </div>
+                <div class="col-4 border-start border-secondary">
+                    <small class="text-white d-block graffiti-font" style="font-size: 0.9rem;">ACTUAL</small>
+                    <span id="moveCounter" class="fw-bold text-white fs-4">0</span>
+                </div>
+            </div>
+
+            <div id="errorAlert" class="alert py-1 mb-2 text-center small fw-bold d-none" 
+                 style="background: rgba(255, 0, 60, 0.25); border: 1px solid var(--neon-red); color: #fff; text-shadow: 0 0 5px var(--neon-red); font-family: 'Segoe UI'; letter-spacing: 1px;">
+                 </div>
+            
+            <div class="game-area">
+                <div id="t0" class="tower-container" onclick="clickTower(0)">
+                    <div class="tower-rod"></div> 
+                </div>
+                <div id="t1" class="tower-container" onclick="clickTower(1)">
+                    <div class="tower-rod"></div>
+                </div>
+                <div id="t2" class="tower-container" onclick="clickTower(2)">
+                    <div class="tower-rod"></div>
+                </div>
+            </div>
+
+            <button class="btn btn-sm btn-neon w-50 py-1 fs-6" onclick="startGame()">REINICIAR</button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="winModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content text-center p-3">
+                <div class="modal-body">
+                    <h3 class="text-neon-green fw-bold mb-2">¡VICTORIA!</h3>
+                    <p class="small mb-3" style="font-family: 'Segoe UI';">
+                        Nivel <span id="modalDisks"></span> completado.
+                    </p>
+                    <div class="row mb-3 g-1">
+                        <div class="col-6 border-end border-secondary">
+                            <small class="text-white d-block graffiti-font">TUS MOVS</small>
+                            <span id="modalMoves" class="fs-4 fw-bold text-white">0</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-white d-block graffiti-font">RECORD</small>
+                            <span id="modalMin" class="fs-4 fw-bold text-neon-yellow">0</span>
+                        </div>
+                    </div>
+                    <div id="perfecMessage" class="text-neon-yellow alert alert-success py-1 small d-none mb-2" style="background: #000000; border-color: #0aff0a;">
+                        PERFECTO
+                    </div>
+                    <button class="btn btn-sm btn-outline-light w-100" data-bs-dismiss="modal" onclick="startGame()">OTRA VEZ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let numDisks = 3;
+        let minMoves = 7;
+        let towers = [[], [], []];
+        let selectedTower = -1;
+        let moves = 0;
+        let gameActive = true;
+        let errorTimer; // Timer para ocultar el mensaje de error
+
+        const modalElement = document.getElementById('winModal');
+        const modal = new bootstrap.Modal(modalElement);
+
+        const diskColors = [
+            '#bd00ff', '#00f3ff', '#0aff0a', '#fcee0a', 
+            '#ff003c', '#ff8800', '#ffffff', '#0044ff'
+        ];
+
+        function startGame() {
+            const select = document.getElementById('diskSelect');
+            numDisks = parseInt(select.value);
+            minMoves = Math.pow(2, numDisks) - 1;
+            document.getElementById('minMovesTxt').innerText = minMoves;
+            
+            // Ocultar error si estaba activo
+            hideError();
+
+            towers = [[], [], []];
+            moves = 0;
+            selectedTower = -1;
+            gameActive = true;
+
+            for (let i = numDisks; i >= 1; i--) {
+                towers[0].push(i);
+            }
+
+            document.getElementById('moveCounter').innerText = "0";
+            render();
+        }
+
+        function render() {
+            const towerIds = ['t0', 't1', 't2'];
+            
+            towerIds.forEach((id, index) => {
+                const el = document.getElementById(id);
+                const oldDisks = el.querySelectorAll('.disk');
+                oldDisks.forEach(d => d.remove());
+
+                towers[index].forEach(diskSize => {
+                    const disk = document.createElement('div');
+                    disk.className = 'disk';
+                    const widthPercent = 25 + (diskSize * 9); 
+                    disk.style.width = `${widthPercent}%`;
+                    
+                    const color = diskColors[(diskSize - 1) % diskColors.length];
+                    disk.style.backgroundColor = color;
+                    disk.style.color = color; 
+                    
+                    el.appendChild(disk);
+                });
+
+                if (selectedTower === index) {
+                    el.style.borderBottom = '3px solid #bd00ff';
+                    el.style.boxShadow = '0 5px 15px rgba(189, 0, 255, 0.2)';
+                } else {
+                    el.style.borderBottom = '3px solid transparent';
+                    el.style.boxShadow = 'none';
+                }
+            });
+        }
+
+        function clickTower(n) {
+            if (!gameActive) return;
+
+            if (selectedTower === -1) {
+                if (towers[n].length > 0) {
+                    selectedTower = n;
+                }
+            } else {
+                if (selectedTower === n) {
+                    selectedTower = -1;
+                } else {
+                    moveDisk(selectedTower, n);
+                    selectedTower = -1;
+                }
+            }
+            render();
+        }
+
+        function moveDisk(from, to) {
+            const sourceTower = towers[from];
+            const destTower = towers[to];
+
+            const diskToMove = sourceTower[sourceTower.length - 1];
+            const topDestDisk = destTower.length > 0 ? destTower[destTower.length - 1] : 999;
+
+            if (diskToMove < topDestDisk) {
+                // Movimiento Válido
+                destTower.push(sourceTower.pop());
+                moves++;
+                document.getElementById('moveCounter').innerText = moves;
+                hideError(); // Ocultar error si había uno previo
+                checkWin();
+            } else {
+                // Movimiento INVÁLIDO -> Mostrar Mensaje
+                showError("¡ERROR! DISCO GRANDE SOBRE PEQUEÑO");
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorAlert');
+            el.innerText = msg;
+            el.classList.remove('d-none');
+            el.classList.add('shake-anim');
+
+            // Flash rojo en el fondo
+            document.body.style.backgroundColor = "#500";
+            setTimeout(() => {
+                document.body.style.backgroundColor = ""; 
+            }, 150);
+
+            // Quitar animación shake para que pueda repetirse
+            setTimeout(() => {
+                el.classList.remove('shake-anim');
+            }, 500);
+
+            // Ocultar automáticamente tras 2 segundos
+            clearTimeout(errorTimer);
+            errorTimer = setTimeout(() => {
+                el.classList.add('d-none');
+            }, 2000);
+        }
+
+        function hideError() {
+            const el = document.getElementById('errorAlert');
+            el.classList.add('d-none');
+        }
+
+        function checkWin() {
+            if (towers[2].length === numDisks) {
+                gameActive = false;
+                showWinModal();
+            }
+        }
+
+        function showWinModal() {
+            document.getElementById('modalDisks').innerText = numDisks;
+            document.getElementById('modalMoves').innerText = moves;
+            document.getElementById('modalMin').innerText = minMoves;
+            
+            const perfectMsg = document.getElementById('perfecMessage');
+            if (moves === minMoves) {
+                perfectMsg.classList.remove('d-none');
+            } else {
+                perfectMsg.classList.add('d-none');
+            }
+            modal.show();
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
